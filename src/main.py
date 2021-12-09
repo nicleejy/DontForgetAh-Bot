@@ -783,9 +783,9 @@ def gen_help_menu(message):
     \n❌  *Cancel* - end reminder setting process\
     \n📄  *My Reminders* - see all active reminders\
     \n\n\n*Command List*\
-    \n\n/start - bring up main menu\
-    \n/help - bring up this menu\
-    \n\nIf you enjoyed using this project, leave me a ⭐️ on GitHub: githublink\
+    \n\n*/start* - bring up main menu\
+    \n*/help* - bring up this menu\
+    \n\nIf you enjoyed using this project, leave me a ⭐️ on GitHub: https://github.com/nicleejy/DontForgetAh-Bot\
     \n\nThank you for using *DontForgetAh Bot*!")
 
 
