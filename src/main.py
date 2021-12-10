@@ -79,7 +79,7 @@ DATE_QUERY = ["What day your event on leh?",
 TIME_QUERY = ["Your event at what time?", 
               "When your event start?", 
               "What time ah?", 
-              "What time shd I set this for ah?"]
+              "What time should I set this for ah?"]
 
 DETAILS_QUERY = ["Can tell me the date and time?", 
                  "When your event ah? Lemme know the date also :)", 
@@ -90,7 +90,8 @@ GREETING = ["Let me know when you need me again! :)",
             "If you got appointment, drop me a text anytime ok?", 
             "Just send me a message anytime ah!", 
             "See you soon ya!", 
-            "Bye!"]
+            "Bye!",
+            "See you later!"]
 
 
 scheduler = BackgroundScheduler(daemon=True, jobstores=jobstores, executors=executors, timezone="Asia/Singapore")
@@ -779,14 +780,14 @@ def gen_help_menu(message):
     \n- Attach a note to each reminder if needed\
     \n- Easily manage reminders via the inline keyboard menu\
     \n\n\n*Keyboard Menu*\
-    \n\n✏️  *Edit* - remove selected reminders\
-    \n❌  *Cancel* - end reminder setting process\
-    \n📄  *My Reminders* - see all active reminders\
+    \n\n✏️  *Edit* - Remove selected reminders\
+    \n❌  *Cancel* - Terminate reminder setting process\
+    \n📄  *My Reminders* - View all active reminders\
     \n\n\n*Command List*\
-    \n\n*/start* - bring up main menu\
-    \n*/help* - bring up this menu\
+    \n\n*/start* - Bring up main menu\
+    \n*/help* - Bring up this menu\
     \n\nIf you enjoyed using this project, leave me a ⭐️ on GitHub: https://github.com/nicleejy/DontForgetAh-Bot\
-    \n\nThank you for using *DontForgetAh Bot*!")
+    \n\nThank you for using *DontForgetAh Bot*!", disable_web_page_preview=True)
 
 
 @bot.message_handler(content_types=["text"], func=lambda message: message.text == "📄 My Reminders")
@@ -836,7 +837,8 @@ def process_text(message):
     id = message.chat.id
     if message.text == "❌ Cancel":
         bot.send_message(id, generate_random(GREETING), reply_markup=gen_menu())
-        del user_info[id]
+        if id in user_info:
+            del user_info[id]
     else:
         input_details = []
         for word in message.text.split():
@@ -930,6 +932,7 @@ def edit_reminder_list(message):
     choice = message.text
     reminders_id = user_info[id]["edit_message_id"]
     if choice == "Delete all":
+        print(id_list)
         for i in id_list:
             event_collection.update_one({"_id": id}, {"$unset":{"reminders." + str(i[0]): ""}}) 
             try:
@@ -938,13 +941,14 @@ def edit_reminder_list(message):
             except Exception as e:
                 print(e)
                 continue
-            id_list.remove(i)
         has_reminders = display_reminders(message, False)
 
         if has_reminders != False:
             reminders = has_reminders[1]
         else:
             reminders = "*Your saved reminders:*\n\n_No more reminders liao!_"   
+
+        print(reminders)
         bot.edit_message_text(chat_id=id, message_id=reminders_id, text=reminders)
         bot.send_message(id, "I delete all your reminders alr ah! ✅", reply_markup=gen_menu())
         del user_info[id]
@@ -960,7 +964,7 @@ def edit_reminder_list(message):
                 scheduler.remove_job(i[1], jobstore="mongo")
             except:
                 pass
-            id_list.remove(i)
+
             has_reminders = display_reminders(message, False)
 
             if has_reminders:
@@ -976,9 +980,9 @@ def edit_reminder_list(message):
                 bot.send_message(id, "I delete all your reminders alr ah! ✅", reply_markup=gen_menu())
                 del user_info[id]
         else:
-            bot.send_message(id, "Sorry ah I don't understand what you mean, select a time from my buttons okay?")
+            bot.send_message(id, "Sorry ah I don't understand what you mean, select a time from my buttons.")
     else:
-        bot.send_message(id, "Sorry ah I don't understand what you mean, select a time from my buttons okay?")
+        bot.send_message(id, "Sorry ah I don't understand what you mean, select a time from my buttons.")
 
 
 def add_note(message):
@@ -1013,7 +1017,7 @@ def create_note(message):
             bot.send_message(id, generate_random(GREETING), reply_markup=gen_menu())
             del user_info[id]
         else:
-            bot.send_message(id, "Sorry ah I don't understand what you mean, select an option from my buttons okay?")
+            bot.send_message(id, "Sorry ah I don't understand what you mean, select an option from my buttons.")
     else:
         note = message.text
         user_info[id]["note"] = note
