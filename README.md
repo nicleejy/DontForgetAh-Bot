@@ -58,7 +58,7 @@ If verbs appear more than 2 times, the first verb is regarded as redundant and n
 In this case, the text is indexed from 'go' and sliced. 
 
 The program will then identify prepositions *('IN')* or cardinal digits *('CD')* that indicate the end of the event title.
-A list of stop words is predeclared, which it checks against to see if any time-related keywords such as 'next', 'tmr', 'tues' appear in the list and is then indexed accordingly.
+A list of stop words is predeclared, which it checks against to see if any time-related keywords such as *next, tmr, tues* appear in the list and is then indexed accordingly.
 The text is then sliced at this index to obtain the event title. The remaining set of words contain the details critical for time setting.
 
 Another set of functions look out for the format of the user input and classifies each word as a *time, day, date, month, year* entry.
