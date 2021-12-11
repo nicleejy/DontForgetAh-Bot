@@ -163,7 +163,7 @@ Contributions, issues, and feature requests are welcome!
 
 Nicholas Lee: nic.leejunyi@gmail.com
 
-Project Link: [https://github.com/nicleejy/NUS-Timetable-Reminders](https://github.com/nicleejy/NUS-Timetable-Reminders)
+Project Link: [https://github.com/nicleejy/DontForgetAh-Bot](https://github.com/nicleejy/DontForgetAh-Bot)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
