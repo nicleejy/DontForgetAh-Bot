@@ -714,10 +714,8 @@ def gen_uuid(title):
 def generate_reminder(date_time, adj_time, title, userID, notes, advance, memo, repeat):
     job_id1 = gen_uuid(title)
     job_id2 = gen_uuid(title)
-    repeat_reminder = False
+
     entry = event_collection.find_one({"_id": userID})
-    if userID in user_info:
-        repeat_reminder = user_info[userID]["set_repeating"]
 
     if entry != None:
         #{uniqueID : [event title, notes, datetime]}
@@ -730,9 +728,9 @@ def generate_reminder(date_time, adj_time, title, userID, notes, advance, memo, 
     else:
         attached_notes = False
 
-    if not repeat_reminder:
-        scheduler.add_job(notify, next_run_time=date_time, args=[job_id1, userID, title, date_time, "now", attached_notes, notes], jobstore="mongo", replace_existing=True, id=job_id1, misfire_grace_time=30)
-        scheduler.add_job(notify, next_run_time=adj_time, args=[job_id2, userID, title, date_time, advance, attached_notes, notes], jobstore="mongo", replace_existing=True, id=job_id2, misfire_grace_time=30)
+    if not repeat:
+        scheduler.add_job(notify, next_run_time=date_time, args=[job_id1, userID, title, date_time, "now", attached_notes, notes, repeat], jobstore="mongo", replace_existing=True, id=job_id1, misfire_grace_time=30)
+        scheduler.add_job(notify, next_run_time=adj_time, args=[job_id2, userID, title, date_time, advance, attached_notes, notes, repeat], jobstore="mongo", replace_existing=True, id=job_id2, misfire_grace_time=30)
     else:
         day_actual = int(date_time.weekday())
         hour_actual = int(date_time.hour)
@@ -740,17 +738,17 @@ def generate_reminder(date_time, adj_time, title, userID, notes, advance, memo, 
         day_adj = int(adj_time.weekday())
         hour_adj = int(adj_time.hour)
         minute_adj = int(adj_time.minute)
-        scheduler.add_job(notify, args=[job_id1, userID, title, date_time, "now", attached_notes, notes], trigger="cron", hour=hour_actual, minute=minute_actual, day_of_week=day_actual, jobstore="mongo", id=job_id1, replace_existing=True, misfire_grace_time=30)
-        scheduler.add_job(notify, args=[job_id2, userID, title, date_time, advance, attached_notes, notes], trigger="cron", hour=hour_adj, minute=minute_adj, day_of_week=day_adj, jobstore="mongo", id=job_id2, replace_existing=True, misfire_grace_time=30)
+        scheduler.add_job(notify, args=[job_id1, userID, title, date_time, "now", attached_notes, notes, repeat], trigger="cron", hour=hour_actual, minute=minute_actual, day_of_week=day_actual, jobstore="mongo", id=job_id1, replace_existing=True, misfire_grace_time=30)
+        scheduler.add_job(notify, args=[job_id2, userID, title, date_time, advance, attached_notes, notes, repeat], trigger="cron", hour=hour_adj, minute=minute_adj, day_of_week=day_adj, jobstore="mongo", id=job_id2, replace_existing=True, misfire_grace_time=30)
     scheduler.print_jobs()
 
 
-def notify(job_id, userID, title, date_time, advance, attached_notes, notes):
-    bot.send_message(userID, "Your appointment starts " + advance + "!", 
-                    reply_markup=markup_reminder(date_time, title))
-    event_collection.update_one({"_id": userID}, {"$unset":{"reminders." + str(job_id): ""}}) 
+def notify(job_id, userID, title, date_time, advance, attached_notes, notes, repeat):
+    bot.send_message(userID, "Your appointment starts " + advance + "!", reply_markup=markup_reminder(date_time, title))
+    if not repeat:
+        event_collection.update_one({"_id": userID}, {"$unset":{"reminders." + str(job_id): ""}}) 
     if attached_notes:
-        bot.send_message(userID, "📝 _Notes:_     " + notes)
+        bot.send_message(userID, "📝 " + notes)
     scheduler.print_jobs()
 
 
