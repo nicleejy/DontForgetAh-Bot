@@ -93,6 +93,29 @@ GREETING = ["Let me know when you need me again! :)",
             "Bye!",
             "See you later!"]
 
+WELCOME_MESSAGE = "*What can this bot do?*\n\nI'm a scheduling system with the ability to understand natural language (to a certain extent of course 😁). You can send me a text just as you would to a friend and I will try my best to create reminders for you.\
+    \n\nYou will receive the notifications right here on Telegram.\
+    \n\n\n*How to use?*\n\nYou can create reminders in many different ways. Here are some examples:\
+    \n\n- _tell me to go work next mon at 10_\
+    \n- _remind me to get groceries next weds at 1700_\
+    \n- _exam on 17/2 9am_\
+    \n- _clean up my room every tue at 10.30am_\
+    \n- _set a reminder for dinner on the 8th Nov_\
+    \n\nCurrently, I am unable to process commands such as _every 10 minutes_ or _every 30 seconds_.\
+    \n\n\n*Key Features*\n\n- Recognise timings provided in 24-hour or 12-hour formats\
+    \n- You can use short forms like _tmr_, _tues_, _dec_\
+    \n- Attach a note to each reminder if needed\
+    \n- Easily manage reminders via the inline keyboard menu\
+    \n\n\n*Keyboard Menu*\
+    \n\n✏️  *Edit* - Remove selected reminders\
+    \n❌  *Cancel* - Terminate reminder setting process\
+    \n📄  *My Reminders* - View all active reminders\
+    \n\n\n*Command List*\
+    \n\n*/start* - Bring up main menu\
+    \n*/help* - Bring up this menu\
+    \n\nIf you enjoyed using this project, leave me a ⭐️ on GitHub: https://github.com/nicleejy/DontForgetAh-Bot\
+    \n\nThank you for using *DontForgetAh Bot*!"
+
 
 scheduler = BackgroundScheduler(daemon=True, jobstores=jobstores, executors=executors, timezone="Asia/Singapore")
 
@@ -137,7 +160,7 @@ class TimeError(Error):
     pass
 
 class SetTimeError(Error):
-    def __init__(self, msg="error during time setting", *args, **kwargs):
+    def __init__(self, msg="Error during time setting", *args, **kwargs):
         super().__init__(msg, *args, **kwargs)
     pass
 
@@ -438,7 +461,7 @@ def create_reminder(tokens, ID):
                 if get_current_time() > tz.localize(combined_datetime):
                     print("The current time is " + str(get_current_time().time()) + " but time specified was " + str(combined_datetime.time()) + ".")
                     print("Offsetting reminder by 1 day.")
-                    combined_datetime += timedelta(days=1) #event for today assumed to be the next day
+                    combined_datetime += timedelta(days=1)
                     return tz.localize(combined_datetime)
                 else:
                     return tz.localize(combined_datetime)
@@ -447,9 +470,8 @@ def create_reminder(tokens, ID):
                 print("Date and time info not specified.")
                 return "all"
 
-
 def get_event(text):
-    stop_words = ["tmr", "tomorrow", "every", "tmrw", "next", "today", "week", "month", "year", "this", "on"]
+    stop_words = ["tmr", "tomorrow", "every", "tmrw", "next", "today", "week", "month", "this", "on"]
     event_title = None
     tokenize_raw = word_tokenize(text)
     tokens_lower = []
@@ -573,17 +595,20 @@ def get_event(text):
     #filter unnecessary command phrases
     event_string = " ".join(event_title)
     new_event_title = []
+    new_title = False
 
     for phrase in FILTERS:
         if phrase in event_string or phrase == event_string:
             words = phrase.split()
             new_event_title = [x for x in event_title if x not in words]
+            new_title = True
             break
-        
+
     if len(event_title) == 0:
         new_event_title = ["appointment"]
-    
-    if len(new_event_title) == 0:
+    elif new_title == True and len(new_event_title) == 0:
+        new_event_title = ["appointment"]
+    else:
         new_event_title = event_title
 
     new_event_title = " ".join(new_event_title)
@@ -613,7 +638,7 @@ def display_reminders(msg, send_message):
     entry = event_collection.find_one({"_id": userID})
     reminders = "*Your saved reminders:*"
     job_IDs = []
-    count = 0
+    reminder_count = 0
     if entry != None:
         data = entry["reminders"]
         if data:
@@ -621,22 +646,26 @@ def display_reminders(msg, send_message):
                 date_time = utc_to_local(value[2])
                 ID_pair = []
                 ID_pair.append(key)
-                count += 1
+                reminder_count += 1
                 event_title = value[0]
                 notes = value[1]
-                time = date_time.strftime("%I:%M %p")
                 adv_memo = value[3]
                 set_repeat = value[4]
                 second_id = value[5]
+                time = date_time.strftime("%I:%M %p")
                 date = calendar.day_name[date_time.weekday()] + " (" + date_time.strftime("%d/%m/%Y") + ")" 
                 ID_pair.append(second_id)
+
                 if set_repeat:
                     event_title += " 🔄"
+                    date = "Weekly"
+                else:
+                    date = calendar.day_name[date_time.weekday()] + " (" + date_time.strftime("%d/%m/%Y") + ")"
 
                 if notes != None:
-                    result = "*" + str(count) + ". " + event_title + "*\n\n_Date:_     " + date + "\n_Time:_     " + time + "\n_Notes:_     " + notes + "\n_Alerts:_     " + adv_memo
+                    result = "*" + str(reminder_count) + ". " + event_title + "*\n\n_Date:_     " + date + "\n_Time:_     " + time + "\n_Notes:_     " + notes + "\n_Alerts:_     " + adv_memo
                 else:
-                    result = "*" + str(count) + ". " + event_title + "*\n\n_Date:_     " + date + "\n_Time:_     " + time + "\n_Alerts:_     " + adv_memo
+                    result = "*" + str(reminder_count) + ". " + event_title + "*\n\n_Date:_     " + date + "\n_Time:_     " + time + "\n_Alerts:_     " + adv_memo
                 reminders = reminders + "\n\n" + result
                 job_IDs.append(ID_pair)
             return [job_IDs, reminders]
@@ -714,7 +743,7 @@ def gen_uuid(title):
 def generate_reminder(date_time, adj_time, title, userID, notes, advance, memo, repeat):
     job_id1 = gen_uuid(title)
     job_id2 = gen_uuid(title)
-
+    
     entry = event_collection.find_one({"_id": userID})
 
     if entry != None:
@@ -755,7 +784,8 @@ def notify(job_id, userID, title, date_time, advance, attached_notes, notes, rep
 @bot.message_handler(commands=["start"])
 def send_welcome(message):
     id = message.chat.id
-    bot.send_message(id, "Hello! I'm *Don'tForgetAh Bot* 🇸🇬\n\nI can help you schedule reminders for events or appointments with a Singaporean twist. ⏰\n\nSimply send me a text using natural language!\
+    username = message.from_user.first_name
+    bot.send_message(id, "Hello " + username + "!\n\nI'm *Don'tForgetAh Bot* 🇸🇬\n\nI can help you schedule reminders for events or appointments with a Singaporean twist. ⏰\n\nSimply send me a text using natural language!\
     \n\nTo set a reminder, send me a message like\n\n- _remind me to go to work on the 9th oct_\n- _school tmr at 9am_\n- _exam on 2/8 at 1500_\n- _water the plants every tues at 8am_\
     \n- _dentist appointment next fri 10:00am_\
     \n\nIf you need any help, enter the */help* command for more details.", reply_markup=gen_menu())
@@ -764,28 +794,7 @@ def send_welcome(message):
 @bot.message_handler(commands=["help"])
 def gen_help_menu(message):
     id = message.chat.id
-    bot.send_message(id, "*What can this bot do?*\n\nI'm a scheduling system with the ability to understand natural language (to a certain extent of course 😁). You can send me a text just as you would to a friend and I will try my best to create reminders for you.\
-    \n\nYou will receive the notifications right here on Telegram.\
-    \n\n\n*How to use?*\n\nYou can create reminders in many different ways. Here are some examples:\
-    \n\n- _tell me to go work next mon at 10_\
-    \n- _remind me to get groceries next weds at 1700_\
-    \n- _exam on 17/2 9am_\
-    \n- _clean up my room every tue at 10.30am_\
-    \n- _set a reminder for dinner on the 8th Nov_\
-    \n\nCurrently, I am unable to process commands such as _every 10 minutes_ or _every 30 seconds_.\
-    \n\n\n*Key Features*\n\n- Recognise timings provided in 24-hour or 12-hour formats\
-    \n- You can use short forms like _tmr_, _tues_, _dec_\
-    \n- Attach a note to each reminder if needed\
-    \n- Easily manage reminders via the inline keyboard menu\
-    \n\n\n*Keyboard Menu*\
-    \n\n✏️  *Edit* - Remove selected reminders\
-    \n❌  *Cancel* - Terminate reminder setting process\
-    \n📄  *My Reminders* - View all active reminders\
-    \n\n\n*Command List*\
-    \n\n*/start* - Bring up main menu\
-    \n*/help* - Bring up this menu\
-    \n\nIf you enjoyed using this project, leave me a ⭐️ on GitHub: https://github.com/nicleejy/DontForgetAh-Bot\
-    \n\nThank you for using *DontForgetAh Bot*!", disable_web_page_preview=True)
+    bot.send_message(id, WELCOME_MESSAGE, disable_web_page_preview=True)
 
 
 @bot.message_handler(content_types=["text"], func=lambda message: message.text == "📄 My Reminders")
@@ -927,6 +936,9 @@ def edit_reminder_list(message):
     id = message.chat.id
     if "job" in user_info[id]:
         id_list = user_info[id]["job"]
+        print(id_list)
+    print(user_info[id])
+
     choice = message.text
     reminders_id = user_info[id]["edit_message_id"]
     if choice == "Delete all":
@@ -957,6 +969,7 @@ def edit_reminder_list(message):
         if 1 <= int(choice) <= len(id_list):
             i = id_list[int(choice) - 1]
             event_collection.update_one({"_id": id}, {"$unset":{"reminders." + str(i[0]): ""}})  
+            user_info[id]["job"].remove(i)
             try:
                 scheduler.remove_job(i[0], jobstore="mongo")
                 scheduler.remove_job(i[1], jobstore="mongo")
